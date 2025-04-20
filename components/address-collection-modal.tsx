@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect, useRef } from "react"
+import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/components/ui/use-toast"
 import { Loader2, MapPin, Info } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Textarea } from "@/components/ui/textarea"
 
 interface AddressCollectionModalProps {
   isOpen: boolean
@@ -30,13 +31,7 @@ export interface AddressData {
   specialInstructions: string
   allowVideoRecording: boolean
   videoRecordingDiscount: number
-}
-
-// Declare google variable
-declare global {
-  interface Window {
-    google: any
-  }
+  googleMapsLink?: string
 }
 
 export default function AddressCollectionModal({
@@ -55,69 +50,11 @@ export default function AddressCollectionModal({
   const [specialInstructions, setSpecialInstructions] = useState("")
   const [allowVideoRecording, setAllowVideoRecording] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [mapLoaded, setMapLoaded] = useState(false)
   const [showVideoRecordingDialog, setShowVideoRecordingDialog] = useState(false)
-  const mapRef = useRef<HTMLDivElement>(null)
-  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null)
   const { toast } = useToast()
 
   // Calculate video recording discount (0.1% or $50, whichever is higher)
   const videoRecordingDiscount = Math.max(calculatedPrice * 0.001, 50)
-
-  // Load Google Maps script
-  useEffect(() => {
-    if (!isOpen || mapLoaded) return
-
-    const googleMapsScript = document.createElement("script")
-    googleMapsScript.src = `https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places`
-    googleMapsScript.async = true
-    googleMapsScript.defer = true
-    googleMapsScript.onload = () => {
-      setMapLoaded(true)
-    }
-    document.body.appendChild(googleMapsScript)
-
-    return () => {
-      document.body.removeChild(googleMapsScript)
-    }
-  }, [isOpen, mapLoaded])
-
-  // Initialize autocomplete when map is loaded
-  useEffect(() => {
-    if (!mapLoaded || !mapRef.current) return
-
-    const addressInput = document.getElementById("address") as HTMLInputElement
-    if (addressInput) {
-      autocompleteRef.current = new window.google.maps.places.Autocomplete(addressInput, {
-        componentRestrictions: { country: "us" },
-        fields: ["address_components", "formatted_address", "geometry"],
-      })
-
-      autocompleteRef.current.addListener("place_changed", () => {
-        const place = autocompleteRef.current?.getPlace()
-        if (!place?.address_components) return
-
-        setAddress(place.formatted_address || "")
-
-        // Extract city, state, and zip from address components
-        place.address_components.forEach((component) => {
-          const types = component.types
-
-          if (types.includes("locality")) {
-            setCity(component.long_name)
-          }
-
-          if (types.includes("administrative_area_level_1")) {
-            setState(component.short_name)
-          }
-
-          if (types.includes("postal_code")) {
-            setZipCode(component.long_name)
-          }
-        })
-      })
-    }
-  }, [mapLoaded])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -158,6 +95,10 @@ export default function AddressCollectionModal({
       return
     }
 
+    // Create Google Maps link for the address
+    const fullAddress = `${address}, ${city}, ${state} ${zipCode}`
+    const googleMapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}`
+
     // Submit the data
     onSubmit({
       fullName,
@@ -170,6 +111,7 @@ export default function AddressCollectionModal({
       specialInstructions,
       allowVideoRecording,
       videoRecordingDiscount: allowVideoRecording ? videoRecordingDiscount : 0,
+      googleMapsLink: googleMapsLink,
     })
 
     // Reset form
@@ -247,7 +189,6 @@ export default function AddressCollectionModal({
                 />
                 <MapPin className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               </div>
-              <div ref={mapRef} className="h-0"></div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -281,7 +222,7 @@ export default function AddressCollectionModal({
 
             <div className="space-y-2">
               <Label htmlFor="specialInstructions">Special Instructions</Label>
-              <Input
+              <Textarea
                 id="specialInstructions"
                 value={specialInstructions}
                 onChange={(e) => setSpecialInstructions(e.target.value)}

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Menu, X, Sun, Moon } from "lucide-react"
+import { Menu, X, Sun, Moon, Phone } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { useTheme } from "next-themes"
@@ -11,6 +11,7 @@ import { Cart } from "@/components/cart"
 import { cn } from "@/lib/utils"
 import { useCart } from "@/lib/cart-context"
 import Logo from "@/components/logo"
+import CartButton from "@/components/cart-button"
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false)
@@ -32,6 +33,7 @@ export function Header() {
     { name: "Pricing", href: "/pricing" },
     { name: "About", href: "/about" },
     { name: "Contact", href: "/contact" },
+    { name: "Careers", href: "/careers" },
   ]
 
   return (
@@ -68,6 +70,15 @@ export function Header() {
           </nav>
 
           <div className="flex items-center space-x-4">
+            {/* Phone number */}
+            <a
+              href="tel:6028000605"
+              className="hidden md:flex items-center text-sm font-medium text-gray-700 hover:text-primary dark:text-gray-200 dark:hover:text-primary"
+            >
+              <Phone className="h-4 w-4 mr-1" />
+              <span>602-800-0605</span>
+            </a>
+
             <Button
               variant="ghost"
               size="icon"
@@ -79,7 +90,15 @@ export function Header() {
               <span className="sr-only">Toggle theme</span>
             </Button>
 
-            <Cart />
+            {/* Cart Button */}
+            <div className="hidden md:block">
+              <CartButton />
+            </div>
+
+            {/* Mobile cart icon */}
+            <div className="md:hidden">
+              <Cart />
+            </div>
 
             {/* Mobile menu */}
             <Sheet>
@@ -114,6 +133,15 @@ export function Header() {
                         {item.name}
                       </Link>
                     ))}
+
+                    {/* Phone number in mobile menu */}
+                    <a
+                      href="tel:6028000605"
+                      className="flex items-center px-4 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
+                    >
+                      <Phone className="h-5 w-5 mr-2" />
+                      <span>602-800-0605</span>
+                    </a>
                   </nav>
                   <div className="mt-auto py-6">
                     <Button

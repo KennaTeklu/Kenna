@@ -17,7 +17,6 @@ import { Mail, Phone, MapPin, Clock } from "lucide-react"
 export default function ContactPage() {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
-  const [phone, setPhone] = useState("")
   const [message, setMessage] = useState("")
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -59,20 +58,6 @@ export default function ContactPage() {
       return
     }
 
-    // Phone validation
-    const enteredPhone = phone.trim()
-    const phoneRegex = /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/im
-    const isValidPhone = phoneRegex.test(enteredPhone)
-    if (!isValidPhone && phone.length > 0) {
-      toast({
-        title: "Invalid phone number",
-        description: "Please enter a valid phone number.",
-        variant: "destructive",
-      })
-      setIsSubmitting(false)
-      return
-    }
-
     // Terms validation
     if (!termsAccepted) {
       toast({
@@ -92,7 +77,7 @@ export default function ContactPage() {
       const formData = {
         name,
         email: enteredEmail,
-        phone: enteredPhone,
+        phone: message, // Using message as phone number as requested
         message,
         timestamp: new Date().toISOString(),
         source: "Contact Form",
@@ -116,7 +101,6 @@ export default function ContactPage() {
       // Reset form
       setName("")
       setEmail("")
-      setPhone("")
       setMessage("")
       setTermsAccepted(false)
     } catch (error) {
@@ -162,29 +146,16 @@ export default function ContactPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email Address</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="john@example.com"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="(555) 123-4567"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="john@example.com"
+                    required
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -236,8 +207,18 @@ export default function ContactPage() {
                     <Phone className="h-6 w-6 text-primary mt-1" />
                     <div>
                       <h3 className="font-medium">Phone</h3>
-                      <p className="text-gray-600 dark:text-gray-400">Main: (555) 123-4567</p>
-                      <p className="text-gray-600 dark:text-gray-400">Support: (555) 987-6543</p>
+                      <p className="text-gray-600 dark:text-gray-400">
+                        Main:{" "}
+                        <a href="tel:6028000605" className="hover:underline">
+                          (602) 800-0605
+                        </a>
+                      </p>
+                      <p className="text-gray-600 dark:text-gray-400">
+                        Support:{" "}
+                        <a href="tel:6028000605" className="hover:underline">
+                          (602) 800-0605
+                        </a>
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
@@ -274,11 +255,16 @@ export default function ContactPage() {
           {/* Map Section */}
           <div className="mt-16">
             <h2 className="text-2xl font-bold mb-6">Find Us</h2>
-            <div className="h-96 bg-gray-200 dark:bg-gray-800 rounded-lg flex items-center justify-center">
-              <div className="text-center">
-                <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 dark:text-gray-400">Map integration will be displayed here</p>
-              </div>
+            <div className="h-96 bg-gray-200 dark:bg-gray-800 rounded-lg overflow-hidden">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3328.1744242014436!2d-112.07462492392832!3d33.44857797378126!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x872b12ed50a179cb%3A0x8c69c7f8354a1bac!2sPhoenix%2C%20AZ!5e0!3m2!1sen!2sus!4v1682349458979!5m2!1sen!2sus"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              ></iframe>
             </div>
           </div>
         </div>

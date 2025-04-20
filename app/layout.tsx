@@ -5,6 +5,7 @@ import "./globals.css"
 import { CartProvider } from "@/lib/cart-context"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
+import FixedFooter from "@/components/fixed-footer"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -24,9 +25,10 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <CartProvider>
-            <div className="flex min-h-screen flex-col">
+            <div className="flex min-h-screen flex-col pb-16">
               {children}
               <Toaster />
+              <FixedFooter />
             </div>
           </CartProvider>
         </ThemeProvider>

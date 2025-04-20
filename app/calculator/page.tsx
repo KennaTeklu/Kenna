@@ -106,7 +106,7 @@ export default function CalculatorPage() {
     const serviceName = `${serviceTypeLabel} ${frequencyLabel} (${totalRooms} rooms)`
 
     // Get the room types that were selected
-    const selectedRooms = Object.entries(service.rooms)
+    const selectedRoomsList = Object.entries(service.rooms)
       .filter(([_, count]) => count > 0)
       .map(([type, count]) => `${type.replace(/_/g, " ")} x${count}`)
       .join(", ")
@@ -116,6 +116,45 @@ export default function CalculatorPage() {
       ? service.totalPrice - addressData.videoRecordingDiscount
       : service.totalPrice
 
+    // Create Google Maps link for the address
+    const fullAddress = `${addressData.address}, ${addressData.city}, ${addressData.state} ${addressData.zipCode}`
+    const googleMapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}`
+
+    // Build the message for the waitlist API
+    const formattedMessage = `
+      Service: ${serviceName}
+      Rooms: ${selectedRoomsList}
+      Frequency: ${frequencyLabel}
+      Address: ${fullAddress}
+      Special Instructions: ${addressData.specialInstructions || "None"}
+      Video Recording: ${addressData.allowVideoRecording ? "Yes" : "No"}
+      Maps Link: ${googleMapsLink}
+    `.trim()
+
+    // Submit to waitlist API
+    const waitlistData = {
+      name: addressData.fullName,
+      email: addressData.email,
+      phone: addressData.phone,
+      message: formattedMessage,
+      source: "Calculator Form",
+    }
+
+    // Submit to waitlist API (using the Google Sheets script URL)
+    const scriptURL =
+      "https://script.google.com/macros/s/AKfycbxSSfjUlwZ97Y0iQnagSRH7VxMz-oRSSvQ0bXU5Le1abfULTngJ_BFAQg7c4428DmaK/exec"
+
+    fetch(scriptURL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(waitlistData),
+    }).catch((error) => {
+      console.error("Error submitting to waitlist:", error)
+    })
+
     // Add to cart with customer data
     addItem({
       id: `custom-cleaning-${Date.now()}`,
@@ -124,16 +163,20 @@ export default function CalculatorPage() {
       priceId: "price_custom_cleaning",
       image: "/placeholder.svg?height=100&width=100",
       metadata: {
-        rooms: selectedRooms,
+        rooms: selectedRoomsList,
         frequency: service.frequency,
         serviceType: service.serviceType,
         customer: {
           name: addressData.fullName,
           email: addressData.email,
           phone: addressData.phone,
-          address: `${addressData.address}, ${addressData.city}, ${addressData.state} ${addressData.zipCode}`,
+          address: addressData.address,
+          city: addressData.city,
+          state: addressData.state,
+          zipCode: addressData.zipCode,
           specialInstructions: addressData.specialInstructions,
           allowVideoRecording: addressData.allowVideoRecording,
+          googleMapsLink: googleMapsLink,
         },
       },
     })

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { CheckCircle, MapPin } from "lucide-react"
+import { CheckCircle, MapPin, ExternalLink } from "lucide-react"
 import Link from "next/link"
 import { useCart } from "@/lib/cart-context"
 import { formatCurrency } from "@/lib/utils"
@@ -39,6 +39,11 @@ export default function SuccessPage() {
     setOrderItems([...cart.items])
     clearCart()
   }, [clearCart, cart.items])
+
+  // Function to create Google Maps link
+  const createGoogleMapsLink = (address: string) => {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
@@ -90,8 +95,18 @@ export default function SuccessPage() {
                         <p className="text-sm">
                           <strong>Contact:</strong> {item.metadata.customer.email} | {item.metadata.customer.phone}
                         </p>
-                        <p className="text-sm">
-                          <strong>Address:</strong> {item.metadata.customer.address}
+                        <p className="text-sm flex items-start">
+                          <strong className="mr-1">Address:</strong>
+                          <span className="flex-1">{item.metadata.customer.address}</span>
+                          <a
+                            href={createGoogleMapsLink(item.metadata.customer.address)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline flex items-center ml-2"
+                          >
+                            <span className="sr-only">View on Google Maps</span>
+                            <ExternalLink className="h-4 w-4" />
+                          </a>
                         </p>
                         {item.metadata.customer.specialInstructions && (
                           <p className="text-sm">

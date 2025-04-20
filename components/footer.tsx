@@ -46,6 +46,8 @@ export default function Footer() {
                 { name: "Pricing", href: "/pricing" },
                 { name: "About", href: "/about" },
                 { name: "Contact", href: "/contact" },
+                { name: "Careers", href: "/careers" },
+                { name: "Blog", href: "/blog" },
               ].map((link) => (
                 <li key={link.name}>
                   <Link href={link.href} className="hover:text-primary hover:underline">
@@ -89,7 +91,9 @@ export default function Footer() {
               </li>
               <li className="flex items-center">
                 <Phone className="mr-3 h-5 w-5 text-primary" />
-                <span>(555) 123-4567</span>
+                <a href="tel:6028000605" className="hover:text-primary hover:underline">
+                  (602) 800-0605
+                </a>
               </li>
               <li className="flex items-center">
                 <Mail className="mr-3 h-5 w-5 text-primary" />
@@ -99,8 +103,34 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 border-t border-gray-800 pt-8 text-center">
-          <p>&copy; {currentYear} Smiley Brooms. All rights reserved.</p>
+        <div className="mt-12 border-t border-gray-800 pt-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
+            <div className="text-center md:text-left">
+              <Link href="/privacy-policy" className="hover:text-primary hover:underline">
+                Privacy Policy
+              </Link>
+              {" | "}
+              <Link href="/terms-of-service" className="hover:text-primary hover:underline">
+                Terms of Service
+              </Link>
+            </div>
+            <div className="text-center">
+              <p>&copy; {currentYear} Smiley Brooms. All rights reserved.</p>
+            </div>
+            <div className="text-center md:text-right">
+              <Link href="/sitemap" className="hover:text-primary hover:underline">
+                Sitemap
+              </Link>
+              {" | "}
+              <Link href="/accessibility" className="hover:text-primary hover:underline">
+                Accessibility
+              </Link>
+              {" | "}
+              <Link href="/faq" className="hover:text-primary hover:underline">
+                FAQ
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </footer>

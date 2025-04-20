@@ -2,18 +2,23 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { ShoppingCart, Trash2, Plus, Minus, MapPin } from "lucide-react"
+import { ShoppingCart, Trash2, Plus, Minus, MapPin, ShoppingBag, ExternalLink } from "lucide-react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetFooter } from "@/components/ui/sheet"
 import { useCart } from "@/lib/cart-context"
-// Make sure the import path is correct
 import { createCheckoutSession } from "@/lib/actions"
 import { formatCurrency } from "@/lib/utils"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { Badge } from "@/components/ui/badge"
 
 export function Cart() {
   const { cart, removeItem, updateQuantity, clearCart } = useCart()
   const [isOpen, setIsOpen] = useState(false)
   const [isCheckingOut, setIsCheckingOut] = useState(false)
+
+  // Function to create Google Maps link
+  const createGoogleMapsLink = (address: string) => {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
+  }
 
   const handleCheckout = async () => {
     if (cart.items.length === 0) return
@@ -42,6 +47,34 @@ export function Cart() {
       const customerItem = customItems.find((item) => item.metadata?.customer)
       const customerData = customerItem?.metadata?.customer
 
+      // Prepare data for waitlist API
+      if (customerData) {
+        const waitlistData = {
+          name: customerData.name,
+          email: customerData.email,
+          phone: customerData.phone,
+          message: `Order Details: ${customItems
+            .map((item) => item.name)
+            .join(", ")}. Address: ${customerData.address}. Special Instructions: ${
+            customerData.specialInstructions
+          }. Video Recording: ${customerData.allowVideoRecording ? "Yes" : "No"}. Maps Link: ${createGoogleMapsLink(
+            customerData.address,
+          )}`,
+          source: "Cart Checkout",
+        }
+
+        // Submit to waitlist API (simulated)
+        fetch("https://api.example.com/waitlist", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(waitlistData),
+        }).catch((error) => {
+          console.error("Error submitting to waitlist:", error)
+        })
+      }
+
       const checkoutUrl = await createCheckoutSession({
         lineItems,
         customLineItems,
@@ -55,9 +88,9 @@ export function Cart() {
               phone: customerData.phone,
               address: {
                 line1: customerData.address,
-                city: customerData.city,
-                state: customerData.state,
-                postal_code: customerData.zipCode,
+                city: "",
+                state: "",
+                postal_code: "",
                 country: "US",
               },
             }
@@ -80,15 +113,20 @@ export function Cart() {
         <Button variant="outline" size="icon" className="relative">
           <ShoppingCart className="h-5 w-5" />
           {cart.totalItems > 0 && (
-            <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+            <Badge
+              variant="destructive"
+              className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
+            >
               {cart.totalItems}
-            </span>
+            </Badge>
           )}
         </Button>
       </SheetTrigger>
       <SheetContent className="flex flex-col">
         <SheetHeader>
-          <SheetTitle>Your Cart</SheetTitle>
+          <SheetTitle className="flex items-center">
+            <ShoppingBag className="mr-2 h-5 w-5" /> Your Cart
+          </SheetTitle>
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto py-4">
@@ -166,6 +204,18 @@ export function Cart() {
                         <AccordionContent className="text-sm space-y-1 pb-2">
                           <p>
                             <strong>Address:</strong> {item.metadata.customer.address}
+                          </p>
+                          <p>
+                            <a
+                              href={createGoogleMapsLink(item.metadata.customer.address)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary hover:underline flex items-center"
+                            >
+                              <MapPin className="h-3 w-3 mr-1" />
+                              View on Google Maps
+                              <ExternalLink className="h-3 w-3 ml-1" />
+                            </a>
                           </p>
                           <p>
                             <strong>Contact:</strong> {item.metadata.customer.name} | {item.metadata.customer.phone}
