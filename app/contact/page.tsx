@@ -1,89 +1,57 @@
 "use client"
 
-import type React from "react"
-
 import { useState } from "react"
-import { Header } from "@/components/header"
-import Footer from "@/components/footer"
-import { useToast } from "@/components/ui/use-toast"
+import { motion } from "framer-motion"
+import { z } from "zod"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { Mail, Send, ExternalLink } from "lucide-react"
+
 import { Button } from "@/components/ui/button"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Mail, Phone, MapPin, Clock } from "lucide-react"
+import { CardContent } from "@/components/ui/card"
+import { toast } from "@/components/ui/use-toast"
+import { AnimatedBorderCard } from "@/components/ui/animated-border-card"
+import { GradientText } from "@/components/ui/gradient-text"
+import { useRouter } from "next/navigation"
+
+const formSchema = z.object({
+  name: z.string().min(2, { message: "Name must be at least 2 characters" }),
+  email: z.string().email({ message: "Please enter a valid email address" }),
+  message: z.string().min(10, { message: "Message must be at least 10 characters" }),
+})
 
 export default function ContactPage() {
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [message, setMessage] = useState("")
-  const [termsAccepted, setTermsAccepted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const { toast } = useToast()
+  const router = useRouter()
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      message: "",
+    },
+  })
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true)
 
-    // Email validation
-    const enteredEmail = email.trim().toLowerCase()
-    const allowedDomains = [
-      "gmail.com",
-      "outlook.com",
-      "hotmail.com",
-      "live.com",
-      "yahoo.com",
-      "aol.com",
-      "protonmail.com",
-      "proton.me",
-      "icloud.com",
-      "me.com",
-      "yandex.com",
-      "yandex.ru",
-      "comcast.net",
-      "verizon.net",
-      "cox.net",
-      "spectrum.net",
-    ]
-
-    const isValidEmail = allowedDomains.some((domain) => enteredEmail.endsWith(`@${domain}`))
-    if (!isValidEmail) {
-      toast({
-        title: "Invalid email",
-        description: "Please enter a valid email address ending with one of the accepted domain names.",
-        variant: "destructive",
-      })
-      setIsSubmitting(false)
-      return
-    }
-
-    // Terms validation
-    if (!termsAccepted) {
-      toast({
-        title: "Terms not accepted",
-        description: "Please accept the terms and conditions to proceed.",
-        variant: "destructive",
-      })
-      setIsSubmitting(false)
-      return
-    }
-
     try {
-      // Google Sheets integration
+      // Modify the message to include kenna.mba prefix and format as a phone message
+      const formData = {
+        name: values.name,
+        email: values.email,
+        phone: "phone-message", // This is the key change to make it work with the backend
+        message: `kenna.mba ${values.message}`,
+      }
+
+      // Google Apps Script URL
       const scriptURL =
         "https://script.google.com/macros/s/AKfycbxSSfjUlwZ97Y0iQnagSRH7VxMz-oRSSvQ0bXU5Le1abfULTngJ_BFAQg7c4428DmaK/exec"
 
-      const formData = {
-        name,
-        email: enteredEmail,
-        phone: message, // Using message as phone number as requested
-        message,
-        timestamp: new Date().toISOString(),
-        source: "Contact Form",
-      }
-
-      // Submit form data to Google Sheets
       await fetch(scriptURL, {
         method: "POST",
         mode: "no-cors",
@@ -95,19 +63,22 @@ export default function ContactPage() {
 
       toast({
         title: "Message sent!",
-        description: "We've received your message and will get back to you soon.",
+        description: "Thank you for reaching out. I will get back to you soon.",
       })
 
-      // Reset form
-      setName("")
-      setEmail("")
-      setMessage("")
-      setTermsAccepted(false)
+      // Create email template
+      const emailSubject = `Message from ${values.name} via Portfolio`
+      const emailBody = `Hello ${values.name},\n\n${values.message}\n\nBest regards,\nKenna Teklu\nhire@kenna.mba | hire@kennateklu.com`
+
+      // Open email client with pre-filled message
+      const mailtoLink = `mailto:?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`
+      window.open(mailtoLink)
+
+      form.reset()
     } catch (error) {
-      console.error("Error:", error)
       toast({
         title: "Something went wrong",
-        description: "There was an error sending your message. Please try again.",
+        description: "Your message could not be sent. Please try again later.",
         variant: "destructive",
       })
     } finally {
@@ -116,161 +87,150 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <Header />
-
-      <main className="flex-1">
-        <div className="bg-gradient-to-b from-primary/10 to-transparent py-16">
-          <div className="container mx-auto px-4 text-center">
-            <h1 className="text-4xl font-bold mb-4">Contact Us</h1>
-            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              Have questions or need a custom quote? Reach out to our friendly team.
+    <>
+      <section className="pt-20 pb-16 bg-gradient-to-r from-gray-900 to-gray-800 text-white">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-center max-w-3xl mx-auto"
+          >
+            <h1 className="text-4xl md:text-5xl font-bold mb-6">
+              <GradientText>Get In Touch</GradientText>
+            </h1>
+            <p className="text-xl text-gray-300">
+              I'd love to hear from you! Whether you're a recruiter, potential collaborator, or just want to say hello.
             </p>
-          </div>
+          </motion.div>
         </div>
+      </section>
 
-        <div className="container mx-auto px-4 py-16">
+      <section className="py-16 relative">
+        <div className="absolute inset-0 bg-gray-50 dark:bg-gray-900 opacity-50"></div>
+
+        <div className="container mx-auto px-4 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* Contact Form */}
-            <div>
-              <h2 className="text-2xl font-bold mb-6">Send Us a Message</h2>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Full Name</Label>
-                  <Input
-                    id="name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="John Doe"
-                    required
-                  />
-                </div>
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5 }}
+              viewport={{ once: true }}
+            >
+              <h2 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">Contact Information</h2>
+              <p className="text-gray-600 dark:text-gray-400 mb-8">
+                Feel free to reach out through any of the following channels. I'm always open to discussing new
+                opportunities, projects, or answering any questions you might have.
+              </p>
 
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="john@example.com"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="message">Message</Label>
-                  <Textarea
-                    id="message"
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Tell us how we can help you..."
-                    rows={6}
-                    required
-                  />
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="terms"
-                    checked={termsAccepted}
-                    onCheckedChange={(checked) => setTermsAccepted(checked as boolean)}
-                  />
-                  <Label htmlFor="terms" className="text-sm">
-                    I agree to the terms and conditions and privacy policy
-                  </Label>
-                </div>
-
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
-                  {isSubmitting ? "Sending..." : "Send Message"}
-                </Button>
-              </form>
-            </div>
-
-            {/* Contact Information */}
-            <div>
-              <h2 className="text-2xl font-bold mb-6">Contact Information</h2>
-              <div className="grid gap-6">
-                <Card>
-                  <CardContent className="flex items-start space-x-4 p-6">
-                    <Mail className="h-6 w-6 text-primary mt-1" />
+              <div className="space-y-6">
+                <AnimatedBorderCard interactive={false}>
+                  <CardContent className="p-6 flex items-start space-x-4">
+                    <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+                      <Mail className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+                    </div>
                     <div>
-                      <h3 className="font-medium">Email</h3>
-                      <p className="text-gray-600 dark:text-gray-400">info@smileybrooms.com</p>
-                      <p className="text-gray-600 dark:text-gray-400">support@smileybrooms.com</p>
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">Email</h3>
+                      <p className="text-gray-600 dark:text-gray-400">hire@kenna.mba</p>
+                      <p className="text-gray-600 dark:text-gray-400">hire@kennateklu.com</p>
                     </div>
                   </CardContent>
-                </Card>
+                </AnimatedBorderCard>
 
-                <Card>
-                  <CardContent className="flex items-start space-x-4 p-6">
-                    <Phone className="h-6 w-6 text-primary mt-1" />
+                <AnimatedBorderCard interactive={false}>
+                  <CardContent className="p-6 flex items-start space-x-4">
+                    <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+                      <ExternalLink className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+                    </div>
                     <div>
-                      <h3 className="font-medium">Phone</h3>
-                      <p className="text-gray-600 dark:text-gray-400">
-                        Main:{" "}
-                        <a href="tel:6028000605" className="hover:underline">
-                          (602) 800-0605
-                        </a>
-                      </p>
-                      <p className="text-gray-600 dark:text-gray-400">
-                        Support:{" "}
-                        <a href="tel:6028000605" className="hover:underline">
-                          (602) 800-0605
-                        </a>
-                      </p>
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">GitHub</h3>
+                      <a
+                        href="https://github.com/KennaTeklu"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 dark:text-blue-400 hover:underline"
+                      >
+                        github.com/KennaTeklu
+                      </a>
                     </div>
                   </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="flex items-start space-x-4 p-6">
-                    <MapPin className="h-6 w-6 text-primary mt-1" />
-                    <div>
-                      <h3 className="font-medium">Address</h3>
-                      <p className="text-gray-600 dark:text-gray-400">
-                        123 Cleaning Street, Suite 100
-                        <br />
-                        Sparkle City, SC 12345
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="flex items-start space-x-4 p-6">
-                    <Clock className="h-6 w-6 text-primary mt-1" />
-                    <div>
-                      <h3 className="font-medium">Business Hours</h3>
-                      <p className="text-gray-600 dark:text-gray-400">Monday - Friday: 8:00 AM - 6:00 PM</p>
-                      <p className="text-gray-600 dark:text-gray-400">Saturday: 9:00 AM - 4:00 PM</p>
-                      <p className="text-gray-600 dark:text-gray-400">Sunday: Closed</p>
-                    </div>
-                  </CardContent>
-                </Card>
+                </AnimatedBorderCard>
               </div>
-            </div>
-          </div>
+            </motion.div>
 
-          {/* Map Section */}
-          <div className="mt-16">
-            <h2 className="text-2xl font-bold mb-6">Find Us</h2>
-            <div className="h-96 bg-gray-200 dark:bg-gray-800 rounded-lg overflow-hidden">
-              <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3328.1744242014436!2d-112.07462492392832!3d33.44857797378126!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x872b12ed50a179cb%3A0x8c69c7f8354a1bac!2sPhoenix%2C%20AZ!5e0!3m2!1sen!2sus!4v1682349458979!5m2!1sen!2sus"
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              ></iframe>
-            </div>
+            <motion.div
+              initial={{ opacity: 0, x: 50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5 }}
+              viewport={{ once: true }}
+            >
+              <h2 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">Send Me a Message</h2>
+              <AnimatedBorderCard>
+                <CardContent className="p-6">
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                      <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Name</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Your name" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                              <Input placeholder="your.email@example.com" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="message"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Message</FormLabel>
+                            <FormControl>
+                              <Textarea placeholder="Your message here..." className="min-h-[150px]" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <Button type="submit" className="w-full interactive-button" disabled={isSubmitting}>
+                        {isSubmitting ? (
+                          <>
+                            <div className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            <Send className="mr-2 h-4 w-4" /> Send Message
+                          </>
+                        )}
+                      </Button>
+                    </form>
+                  </Form>
+                </CardContent>
+              </AnimatedBorderCard>
+            </motion.div>
           </div>
         </div>
-      </main>
-
-      <Footer />
-    </div>
+      </section>
+    </>
   )
 }
